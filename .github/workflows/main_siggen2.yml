@@ -1,0 +1,35 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - siggen2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: https://siggen1.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_a742151bc1b04d86b7fd26b2f8c9c967 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_8b03191d0cb04400859b6fda73384e20 }}
+
+    - run: |
+        docker build . -t siggen1.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_a742151bc1b04d86b7fd26b2f8c9c967 }}/workshop/dotjs-leaderboard:${{ github.sha }}
+        docker push siggen1.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_a742151bc1b04d86b7fd26b2f8c9c967 }}/workshop/dotjs-leaderboard:${{ github.sha }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'siggen2'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_78f75a863721403c9068bfa49fd00953 }}
+        images: 'siggen1.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_a742151bc1b04d86b7fd26b2f8c9c967 }}/workshop/dotjs-leaderboard:${{ github.sha }}'
